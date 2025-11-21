@@ -1,0 +1,21 @@
+{
+  "name": "devops-piplines",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "run": "node index.js",
+    "test": "node test.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/maxshen1212/devops-piplines.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/maxshen1212/devops-piplines/issues"
+  },
+  "homepage": "https://github.com/maxshen1212/devops-piplines#readme"
+}
