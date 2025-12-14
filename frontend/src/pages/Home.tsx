@@ -5,8 +5,8 @@ export default function Home() {
   const [status, setStatus] = useState("");
 
   useEffect(() => {
-    apiFetch<{ status: string }>("/health").then((res) => {
-      setStatus(res.status);
+    apiFetch<{ db: string }>("/health").then((res) => {
+      setStatus(res.db);
     });
   }, []);
 

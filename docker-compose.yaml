@@ -1,11 +1,39 @@
 services:
+  mysql:
+    image: mysql:8.4
+    environment:
+      MYSQL_DATABASE: ${DB_NAME:-app_db}
+      MYSQL_USER: ${DB_USER:-app_user}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-app_password}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root_password}
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -p$MYSQL_ROOT_PASSWORD"]
+      interval: 5s
+      timeout: 10s
+      retries: 10
+      start_period: 30s
+
   backend:
     build: ./backend
     ports:
       - "3000:3000"
+    environment:
+      PORT: ${PORT:-3000}
+      DB_HOST: ${DB_HOST:-mysql}
+      DB_PORT: ${DB_PORT:-3306}
+      DB_USER: ${DB_USER:-app_user}
+      DB_PASSWORD: ${DB_PASSWORD:-app_password}
+      DB_NAME: ${DB_NAME:-app_db}
     volumes:
       - ./backend:/app
       - /app/node_modules
+    depends_on:
+      mysql:
+        condition: service_healthy
 
   frontend:
     build: ./frontend
@@ -16,3 +44,6 @@ services:
       - /app/node_modules
     depends_on:
       - backend
+
+volumes:
+  mysql-data:
