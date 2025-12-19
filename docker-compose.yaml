@@ -18,11 +18,13 @@ services:
       start_period: 30s
 
   backend:
-    build: ./backend
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.dev
     ports:
       - "3000:3000"
     environment:
-      PORT: ${PORT:-3000}
+      PORT: 3000  # Fixed port for Docker environment
       DB_HOST: ${DB_HOST:-mysql}
       DB_PORT: ${DB_PORT:-3306}
       DB_USER: ${DB_USER:-app_user}
@@ -36,9 +38,14 @@ services:
         condition: service_healthy
 
   frontend:
-    build: ./frontend
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
     ports:
       - "5173:5173"
+    environment:
+      VITE_PORT: 5173  # Fixed port for Docker environment
+      VITE_API_BASE_URL: http://localhost:3000
     volumes:
       - ./frontend:/app
       - /app/node_modules

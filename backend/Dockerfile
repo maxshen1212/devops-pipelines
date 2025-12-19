@@ -1,9 +1,16 @@
-# ---------- dev ----------
-FROM node:24-alpine
+# Build stage
+FROM node:20-alpine AS builder
 WORKDIR /app
 COPY package*.json ./
 RUN npm ci
 COPY . .
+RUN npm run build
+
+# Production stage
+FROM node:20-alpine AS production
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci --only=production
+COPY --from=builder /app/dist ./dist
 EXPOSE 3000
-# e.g. nodemon
-CMD ["npm", "run", "dev"]
+CMD ["node", "dist/server.js"]

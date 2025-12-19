@@ -3,7 +3,13 @@ import { verifyDbConnection } from "../config/db";
 
 const router = Router();
 
-router.get("/", async (_req, res) => {
+// Simple health check for ALB (no external dependencies)
+router.get("/", (_req, res) => {
+  res.status(200).send("ok");
+});
+
+// Database health check endpoint
+router.get("/db", async (_req, res) => {
   try {
     await verifyDbConnection();
     res.json({ status: "ok", db: "connected" });
