@@ -5,8 +5,8 @@ on:
     branches:
       - main
     paths:
-      - 'backend/**'
-      - '.github/workflows/backend-ci-cd.yml'
+      - "backend/**"
+      - ".github/workflows/backend-ci-cd.yml"
 
 permissions:
   id-token: write
@@ -37,50 +37,40 @@ jobs:
       - name: Build
         run: npm run build
 
-      - name: Build Docker image
-        run: docker build -t backend .
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_TO_ASSUME }}
+          aws-region: ${{ vars.AWS_REGION }}
 
-      - name: push Docker image
-        run: echo "mock push image to aws ecr"
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
 
-      - name: Deploy to ECS
-        run: echo "mock deploy to ecs"
+      - name: Build, tag, and push image to Amazon ECR
+        id: build-image
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: ${{ vars.ECR_REPOSITORY }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          docker build --platform linux/amd64 -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
 
-      # - name: Configure AWS credentials
-      #   uses: aws-actions/configure-aws-credentials@v4
-      #   with:
-      #     role-to-assume: ${{ vars.AWS_ROLE_TO_ASSUME }}
-      #     aws-region: ${{ vars.AWS_REGION }}
+      - name: Render task definition
+        id: task-def
+        run: |
+          sed -e "s|__IMAGE_URI__|${{ steps.build-image.outputs.image }}|g" \
+              -e "s|__CONTAINER_NAME__|${{ vars.CONTAINER_NAME }}|g" \
+              -e "s|__AWS_REGION__|${{ vars.AWS_REGION }}|g" \
+              backend/taskdef.template.json > task-definition.json
+          echo "task-definition=task-definition.json" >> $GITHUB_OUTPUT
 
-      # - name: Login to Amazon ECR
-      #   id: login-ecr
-      #   uses: aws-actions/amazon-ecr-login@v2
-
-      # - name: Build, tag, and push image to Amazon ECR
-      #   id: build-image
-      #   env:
-      #     ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-      #     ECR_REPOSITORY: ${{ vars.ECR_REPOSITORY }}
-      #     IMAGE_TAG: ${{ github.sha }}
-      #   run: |
-      #     docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
-      #     docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
-      #     echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
-
-      # - name: Render task definition
-      #   id: task-def
-      #   run: |
-      #     sed -e "s|__IMAGE_URI__|${{ steps.build-image.outputs.image }}|g" \
-      #         -e "s|__CONTAINER_NAME__|${{ vars.CONTAINER_NAME }}|g" \
-      #         -e "s|__AWS_REGION__|${{ vars.AWS_REGION }}|g" \
-      #         backend/taskdef.template.json > task-definition.json
-      #     echo "task-definition=task-definition.json" >> $GITHUB_OUTPUT
-
-      # - name: Deploy Amazon ECS task definition
-      #   uses: aws-actions/amazon-ecs-deploy-task-definition@v1
-      #   with:
-      #     task-definition: ${{ steps.task-def.outputs.task-definition }}
-      #     service: ${{ vars.ECS_SERVICE }}
-      #     cluster: ${{ vars.ECS_CLUSTER }}
-      #     wait-for-service-stability: true
-
+      - name: Deploy Amazon ECS task definition
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+        with:
+          task-definition: ${{ steps.task-def.outputs.task-definition }}
+          service: ${{ vars.ECS_SERVICE }}
+          cluster: ${{ vars.ECS_CLUSTER }}
+          wait-for-service-stability: true

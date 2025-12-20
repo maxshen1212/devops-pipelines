@@ -2,6 +2,55 @@
 
 A complete end-to-end example project demonstrating how to use Docker Compose for local development and deploy backend to AWS ECS (Fargate) and frontend to S3 + CloudFront via GitHub Actions CI/CD.
 
+## 📚 Documentation
+
+| Document | Description | Use Case |
+|----------|-------------|----------|
+| [**scripts/**](./scripts/) 🤖 | **自動化腳本，一鍵創建所有基礎設施** | 🚀 最快速的部署方式 |
+| [**GITHUB_ACTIONS_SETUP.md**](./GITHUB_ACTIONS_SETUP.md) 🔄 | **GitHub Actions CI/CD 設置指南** | 設置自動部署管道 |
+| [**AWS_CHEAT_SHEET.md**](./AWS_CHEAT_SHEET.md) ⭐ | 快速參考表，核心命令和配置一目了然 | 已了解架構，需要快速查詢命令 |
+| [**NEXT_STEPS.md**](./NEXT_STEPS.md) | 完整的分步部署指南，包含詳細說明 | 首次部署或需要詳細步驟說明 |
+| [**SETUP_GUIDE.md**](./SETUP_GUIDE.md) | AWS 基礎設施和 GitHub Actions 設置 | 從零開始搭建整個環境 |
+| **README.md** (本文件) | 項目概覽和本地開發指南 | 了解項目結構和本地開發 |
+
+💡 **建議使用順序**：
+1. **最快部署**：`scripts/` 自動化腳本 🤖
+2. **首次部署**：`SETUP_GUIDE.md` → `NEXT_STEPS.md`
+3. **日常使用**：`AWS_CHEAT_SHEET.md` ⚡
+4. **問題排查**：`NEXT_STEPS.md` 的故障排查章節
+
+## 🤖 快速開始（使用自動化腳本）
+
+```bash
+# 1. 創建基礎設施（自動化）
+chmod +x scripts/*.sh
+./scripts/setup-aws-infrastructure.sh
+
+# 2. 構建並推送 Docker 映像
+source infrastructure-config.env
+cd backend
+docker build --platform linux/amd64 -t $ECR_REPO:v1.0.0 .
+docker tag $ECR_REPO:v1.0.0 $ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/$ECR_REPO:v1.0.0
+docker push $ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/$ECR_REPO:v1.0.0
+
+# 3. 註冊 Task Definition（更新配置後）
+aws ecs register-task-definition --region $REGION --cli-input-json file://task-definition.json
+
+# 4. 部署 Service（自動化）
+cd ..
+./scripts/deploy-ecs-service.sh
+
+# 5. (可選) 設置 GitHub Actions 自動部署
+./scripts/setup-github-actions.sh
+# 然後在 GitHub 配置 Variables，完成 CI/CD 設置
+
+# 完成！🎉
+```
+
+詳細說明請參考：
+- [scripts/README.md](./scripts/README.md) - 自動化腳本使用指南
+- [GITHUB_ACTIONS_SETUP.md](./GITHUB_ACTIONS_SETUP.md) - GitHub Actions 設置詳解
+
 ## Project Architecture
 
 ### Backend Deployment Path
