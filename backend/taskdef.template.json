@@ -27,6 +27,28 @@
           "value": "production"
         }
       ],
+      "secrets": [
+        {
+          "name": "DB_HOST",
+          "valueFrom": "arn:aws:secretsmanager:__AWS_REGION__:__ACCOUNT_ID__:secret:doublespot/db:host::"
+        },
+        {
+          "name": "DB_PORT",
+          "valueFrom": "arn:aws:secretsmanager:__AWS_REGION__:__ACCOUNT_ID__:secret:doublespot/db:port::"
+        },
+        {
+          "name": "DB_USER",
+          "valueFrom": "arn:aws:secretsmanager:__AWS_REGION__:__ACCOUNT_ID__:secret:doublespot/db:username::"
+        },
+        {
+          "name": "DB_PASSWORD",
+          "valueFrom": "arn:aws:secretsmanager:__AWS_REGION__:__ACCOUNT_ID__:secret:doublespot/db:password::"
+        },
+        {
+          "name": "DB_NAME",
+          "valueFrom": "arn:aws:secretsmanager:__AWS_REGION__:__ACCOUNT_ID__:secret:doublespot/db:dbname::"
+        }
+      ],
       "logConfiguration": {
         "logDriver": "awslogs",
         "options": {
@@ -48,4 +70,3 @@
     }
   ]
 }
-
